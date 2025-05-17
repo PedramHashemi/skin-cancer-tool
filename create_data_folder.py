@@ -4,6 +4,7 @@ import os
 from glob import glob
 import shutil
 import pandas as pd
+from typing import Dict
 
 BASE_FOLDER = "data/skin-cancer-mnist-ham10000/versions/2/"
 IMAGE_FOLDERS = [
@@ -24,7 +25,7 @@ LESION_TYPE_DICT = {
 DESTINATION_FOLDER = "data/"
 
 
-def create_data_folder(lesion_type_dict: str):
+def create_data_folder(lesion_type_dict: Dict):
     """Put images into the folder that represent its class.
 
     Args:
@@ -94,9 +95,10 @@ def split_data(train_share: float, test_share: float):
                 os.makedirs(destination)
             shutil.copy(img, destination)
 
+    # TODO: Add some statistics about the folders
+
 if __name__ == "__main__":
     create_data_folder(
-        image_folders=IMAGE_FOLDERS,
         lesion_type_dict=LESION_TYPE_DICT
     )
     split_data(
