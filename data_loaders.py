@@ -136,23 +136,4 @@ def prepare_data(
 
     return train_data_loader, valid_data_loader
 
-
-if __name__ == "__main__":
-    mean, stdev = data_stats(
-        data_dir="data/train",
-        img_size=(224, 224)
-    )
-    train_transform, valid_transform = create_transform(
-        resize=(244, 244),
-        normalize=(mean, stdev),
-        random_horizontal_flip=True,
-        random_vertical_flip=True,
-    )
-    train_data_loader, valid_data_loader = prepare_data(
-        data_dir="data",
-        batch_size=32,
-        shuffle=True,
-        transforms=(train_transform, valid_transform)
-    )
-    # TODO: Check some of timages in the train_data_loader
-
+# TODO: Check some of timages in the train_data_loader
