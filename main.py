@@ -10,15 +10,15 @@ BATCH_SIZE = 32
 NUM_CLASSES = 7
 NUM_EPOCHS = 2
 
-# TODO: Add the following:
 # [ ]: train accuracy
 # [ ]: Logging
 # [ ]: Hydra for finetuning
 # [ ]: mlflow for tracking experiments
 # [ ]: Final script for training the model
+# [ ]: Save the accuracies and print them in a plot
+# [ ]: Add the testing after validation
 
-
-if __name__ == "__main__":
+def hyperparameter_tuning():
     # Chec if GPU is available
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
@@ -84,3 +84,6 @@ if __name__ == "__main__":
         print(f"Validation accuracy: {accuracy:.4f}")
         confusion_matrix(y_test, y_pred)
 
+
+if __name__ == "__main__":
+    hyperparameter_tuning()
