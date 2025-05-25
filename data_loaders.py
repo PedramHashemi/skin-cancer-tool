@@ -122,15 +122,24 @@ def prepare_data(
 
     train_transform, valid_transform = transforms
 
-    train_data_loader = torchvision.datasets.ImageFolder(
+    train_data = torchvision.datasets.ImageFolder(
         root=train_data_path,
-        transform=train_transform,
+        transform=train_transform
+    )
+    train_data_loder = torch.utils.data.DataLoader(
+        dataset=train_data,
+        batch_size=batch_size,
         shuffle=shuffle
     )
 
-    valid_data_loader = torchvision.datasets.ImageFolder(
+
+    valid_data = torchvision.datasets.ImageFolder(
         root=valid_data_path,
-        transform=valid_transform,
+        transform=valid_transform
+    )
+    valid_data_loader = torch.utils.data.DataLoader(
+        dataset=valid_data,
+        batch_size=batch_size,
         shuffle=shuffle
     )
 
