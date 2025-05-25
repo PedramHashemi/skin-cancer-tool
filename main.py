@@ -3,14 +3,25 @@
 import torch
 import data_loaders
 import models
+import numpy as np
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 BATCH_SIZE = 32
 NUM_CLASSES = 7
 NUM_EPOCHS = 2
 
+# TODO: Add the following:
+# [ ]: train accuracy
+# [ ]: Logging
+# [ ]: Hydra for finetuning
+# [ ]: mlflow for tracking experiments
+# [ ]: Final script for training the model
+
+
 if __name__ == "__main__":
     # Chec if GPU is available
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
 
     # dataloaders
     mean, stdev = data_loaders.data_stats(
@@ -27,13 +38,13 @@ if __name__ == "__main__":
         data_dir="data",
         batch_size=BATCH_SIZE,
         shuffle=True,
-        transforms=(train_transform, valid_transform)
+        transforms=(train_transform, valid_transform),
     )
     # loss function
     loss_fn = torch.nn.CrossEntropyLoss()
 
     # model
-    model = models.get_model(num_classes=NUM_CLASSES)
+    model = models.get_model(num_classes=NUM_CLASSES).to(device)
 
     # optimizer
     optimizer = torch.optim.Adam(
@@ -43,9 +54,9 @@ if __name__ == "__main__":
 
     # training
     for epoch in range(NUM_EPOCHS):
-        for i, (image, label) in enumerate(train_data_loader):
-            images = image.to(device)
-            labels = label.to(device)
+        for i, (images, labels) in enumerate(train_data_loader):
+            images = images.to(device)
+            labels = labels.to(device)
 
             optimizer.zero_grad()
             outputs = model(images)
@@ -54,9 +65,22 @@ if __name__ == "__main__":
             loss_value.backward()
             optimizer.step()
 
-        print(f"Epoch {epoch}/{NUM_EPOCHS}, loss: {loss_value.item():.4f}")
+        print(f"------- Epoch {epoch}/{NUM_EPOCHS}, loss: {loss_value.item():.4f}")
 
-        # y_test = []
-        # y_pred = []
-        # with torch.no_grad():
-        #     for i, (images, labels) in enumerate(valid_data_loader)
+        y_test = []
+        y_pred = []
+        model.eval()
+        # Validation
+        for i, (images, labels) in enumerate(valid_data_loader):
+            images = images.to(device)
+            labels = labels.to(device)
+            with torch.no_grad():
+                preds = torch.argmax(model(images), dim=1)
+            
+            y_test.extend(labels.cpu().numpy())
+            y_pred.extend(preds.cpu().numpy())
+
+        accuracy = accuracy_score(y_test, y_pred)
+        print(f"Validation accuracy: {accuracy:.4f}")
+        confusion_matrix(y_test, y_pred)
+
