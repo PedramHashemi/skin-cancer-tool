@@ -1,0 +1,12 @@
+hyperparameters:
+  lr:
+    loguniform:
+      low: 1e-4
+      high: 1e-1
+  batch_size:
+    choice: [8, 16]
+  dropout:
+    uniform: [.1, .5]
+
+search_alg: optuna
+num_samples: 1

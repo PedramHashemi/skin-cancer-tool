@@ -4,7 +4,7 @@ from torchvision import models
 import torch.nn as nn
 
 
-def get_model(num_classes: int):
+def get_model(num_classes: int, dropout: float):
     """Generate the model.
 
     Args:
@@ -19,7 +19,7 @@ def get_model(num_classes: int):
     model.fc = nn.Sequential(
         nn.Linear(num_features, 64),
         nn.ReLU(inplace=True),
-        nn.Dropout(0.5),
+        nn.Dropout(dropout),
         nn.Linear(64, num_classes),
     )
     return model

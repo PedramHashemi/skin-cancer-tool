@@ -5,21 +5,25 @@ import data_loaders
 import models
 import numpy as np
 from sklearn.metrics import accuracy_score, confusion_matrix
+import yaml
+from ray import tune
+from ray.tune.search.optuna import OptunaSearch
 
 BATCH_SIZE = 32
 NUM_CLASSES = 7
 NUM_EPOCHS = 2
 
+
 # [ ]: train accuracy
 # [ ]: Logging
-# [ ]: Hydra for finetuning
+# [ ]: Ray for finetuning
 # [ ]: mlflow for tracking experiments
 # [ ]: Final script for training the model
 # [ ]: Save the accuracies and print them in a plot
 # [ ]: Add the testing after validation
 
-@hydra.main(version_base=None, config_path="config", config_name="hydra_config")
-def hyperparameter_tuning():
+
+def hyperparameter_tuning(config):
     # Chec if GPU is available
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
@@ -37,7 +41,7 @@ def hyperparameter_tuning():
     )
     train_data_loader, valid_data_loader = data_loaders.prepare_data(
         data_dir="data",
-        batch_size=BATCH_SIZE,
+        batch_size=config['batch_size'],
         shuffle=True,
         transforms=(train_transform, valid_transform),
     )
@@ -45,12 +49,15 @@ def hyperparameter_tuning():
     loss_fn = torch.nn.CrossEntropyLoss()
 
     # model
-    model = models.get_model(num_classes=NUM_CLASSES).to(device)
+    model = models.get_model(
+        num_classes=NUM_CLASSES,
+        dropout=config['droptout']
+    ).to(device)
 
     # optimizer
     optimizer = torch.optim.Adam(
         model.parameters(),
-        lr=0.001,        
+        lr=config['lr'],        
     )
 
     # training
@@ -81,10 +88,27 @@ def hyperparameter_tuning():
             y_test.extend(labels.cpu().numpy())
             y_pred.extend(preds.cpu().numpy())
 
-        accuracy = accuracy_score(y_test, y_pred)
-        print(f"Validation accuracy: {accuracy:.4f}")
-        confusion_matrix(y_test, y_pred)
+        test_accuracy = accuracy_score(y_test, y_pred)
+        print(f"Validation accuracy: {test_accuracy:.4f}")
+        tune.report({
+            "training_loss":loss_value,
+            "test_accuracy":test_accuracy
+        })
 
 
 if __name__ == "__main__":
-    hyperparameter_tuning()
+
+    with open("./config/ray_config.yaml", "r") as f:
+        config_data = yaml.safe_load(f)
+
+    tuner = tune.Tuner(
+        hyperparameter_tuning,
+        param_space=config_data["hyperparameters"],
+        tune_config=tune.TuneConfig(
+            metric="test_accuracy",
+            mode="max",
+            search_alg=config_data['search_alg'],
+        )
+    )
+    results = tuner.fit()
+    
