@@ -32,12 +32,11 @@ def data_stats(
     imgs = []
     means, stdevs = [], []
 
-    
     for image in tqdm(glob(f"{data_dir}/**/*.jpg")):
         img = Image.open(image)
         img = img.resize((img_width, img_height))
         imgs.append(img)
-    
+
     imgs = np.stack(imgs, axis=3)
     print(imgs.shape)
 
@@ -74,23 +73,22 @@ def create_transform(
     """
     transform_list = []
 
-    if resize:
-        transform_list.append(transforms.Resize(resize))
+    if resize is not None:
+        transform_list.append(transforms.Resize((224, 224)))
     if random_horizontal_flip:
         transform_list.append(transforms.RandomHorizontalFlip())
     if random_vertical_flip:
         transform_list.append(transforms.RandomVerticalFlip())
     # Normalize the image
-    transform_list.append(
+    transform_list.extend([
+        transforms.ToTensor(),
         transforms.Normalize(mean=normalize[0], std=normalize[1])
-    )
-    # Convert to tensor
-    transform_list.append(transforms.ToTensor())
+    ])
 
     train_transform = transforms.Compose(transform_list)
     valid_transform = transforms.Compose(
         [
-            transforms.Resize(resize),
+            transforms.Resize((224, 224)),
             transforms.ToTensor(),
             transforms.Normalize(mean=normalize[0], std=normalize[1])
         ]
