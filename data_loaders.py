@@ -126,7 +126,7 @@ def prepare_data(
         root=train_data_path,
         transform=train_transform
     )
-    train_data_loder = torch.utils.data.DataLoader(
+    train_data_loader = torch.utils.data.DataLoader(
         dataset=train_data,
         batch_size=batch_size,
         shuffle=shuffle
