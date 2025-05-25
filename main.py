@@ -18,6 +18,7 @@ NUM_EPOCHS = 2
 # [ ]: Save the accuracies and print them in a plot
 # [ ]: Add the testing after validation
 
+@hydra.main(version_base=None, config_path="config", config_name="hydra_config")
 def hyperparameter_tuning():
     # Chec if GPU is available
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
