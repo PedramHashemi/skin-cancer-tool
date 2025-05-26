@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 # [ ]: train accuracy
-# [ ]: Logging
+# [ ]: Logging models
 # [x]: Ray for finetuning
 # [ ]: mlflow for tracking experiments
 # [ ]: Final script for training the model
