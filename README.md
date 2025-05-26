@@ -12,5 +12,11 @@ Cleaned up the data. the bad csv file s are deleted and two extra folders.
 
 ## Hyperparameter Tuning
 These are good sources for reading about `Ray`.
+
 [Medium](https://medium.com/biased-algorithms/hyperparameter-tuning-with-ray-tune-pytorch-d5749acb314b)
+
 [Ray](https://docs.ray.io/en/latest/tune/index.html)
+
+
+## Check these resources for logging
+[logging](https://realpython.com/python-logging/)
