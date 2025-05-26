@@ -90,7 +90,7 @@ def hyperparameter_tuning(config):
             loss_value.backward()
             optimizer.step()
 
-        logger.info(f"------- Training_loss: {loss_value.item():.4f}")
+        logger.info(f"--> Training_loss: {loss_value.item():.4f}")
 
         logger.info("Starting Testing.")
         y_test = []
@@ -107,7 +107,7 @@ def hyperparameter_tuning(config):
             y_pred.extend(preds.cpu().numpy())
 
         test_accuracy = accuracy_score(y_test, y_pred)
-        logger.info(f"Validation accuracy: {test_accuracy:.4f}")
+        logger.info(f"--> Validation accuracy: {test_accuracy:.4f}")
         tune.report({
             "training_loss":loss_value,
             "test_accuracy":test_accuracy
@@ -139,8 +139,8 @@ if __name__ == "__main__":
         param_space=config,
     )
     results = tuner.fit()
-    print(results)
+    logger.info("Fine Tuning Results: ", results)
     best_trial = results.get_best_trial("loss", "min", "last")
-    print(f"Best trial config: {best_trial.config}")
-    print(f"Best trial final validation loss: {best_trial.last_result['test_accuracy']}")
+    logger.info(f"Best trial config: {best_trial.config}")
+    logger.info(f"Best trial final validation loss: {best_trial.last_result['test_accuracy']}")
     
