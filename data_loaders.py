@@ -4,6 +4,7 @@ We will generate the data loaders for the train, test and validation sets.
 """
 
 import os
+import logging
 from glob import glob
 from typing import List, Tuple
 from tqdm import tqdm
@@ -15,7 +16,10 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 import torchvision
 
-# TODO: add logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 
 def data_stats(
     data_dir: str,
@@ -28,6 +32,8 @@ def data_stats(
         img_size (Tuple[int], optional): The images will be resized. Defaults to (224, 224).
     """
 
+    logging.info("---> Starting Image Stats")
+
     img_height, img_width = img_size
     imgs = []
     means, stdevs = [], []
@@ -38,7 +44,6 @@ def data_stats(
         imgs.append(img)
 
     imgs = np.stack(imgs, axis=3)
-    print(imgs.shape)
 
     imgs = imgs.astype(np.float32) / 255.
 
@@ -50,8 +55,9 @@ def data_stats(
     means.reverse()  # BGR --> RGB
     stdevs.reverse()
 
-    print("normMean = {}".format(means))
-    print("normStd = {}".format(stdevs))
+    logger.info("normMean = {}".format(means))
+    logger.info("normStd = {}".format(stdevs))
+    logger.info("<--- Exiting Image Stats. Successfully outputing image stats.")
     return means, stdevs
 
 
@@ -71,6 +77,8 @@ def create_transform(
     Returns:
         transforms: _description_
     """
+
+    logger.info("---> Starting Create Transformer.")
     transform_list = []
 
     if resize is not None:
@@ -93,6 +101,7 @@ def create_transform(
             transforms.Normalize(mean=normalize[0], std=normalize[1])
         ]
     )
+    logger.info("<--- Exiting Create Transformer. Transformers created successfully.")
     return train_transform, valid_transform
 
 
@@ -113,6 +122,7 @@ def prepare_data(
     Returns:
         List[DataLoader]: _description_
     """
+    logger.info("---> Starting Prepare Data.")
 
     train_data_path = f"{data_dir}/train"
     test_data_path = f"{data_dir}/test"
@@ -120,6 +130,7 @@ def prepare_data(
 
     train_transform, valid_transform = transforms
 
+    logger.info("Creating Train Data Loader.")
     train_data = torchvision.datasets.ImageFolder(
         root=train_data_path,
         transform=train_transform
@@ -130,7 +141,7 @@ def prepare_data(
         shuffle=shuffle
     )
 
-
+    logger.info("Creating Valid Data Loader.")
     valid_data = torchvision.datasets.ImageFolder(
         root=valid_data_path,
         transform=valid_transform
@@ -141,6 +152,8 @@ def prepare_data(
         shuffle=shuffle
     )
 
+    logger.info("<--- Exiting Prepare Data. Successfully created dataloaders.")
     return train_data_loader, valid_data_loader
 
-# TODO: Check some of timages in the train_data_loader
+# TODO: Check some of Images in the train_data_loader
+# TODO: Add Test DataLoader

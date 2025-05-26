@@ -1,5 +1,6 @@
 """Generating the classifcation."""
 
+import logging
 import torch
 import data_loaders
 import models
@@ -8,10 +9,14 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 import yaml
 from ray import tune
 from ray.tune.search.optuna import OptunaSearch
+import mlflow.pytorch
+from mlflow import MlflowClient
 
 NUM_CLASSES = 7
 NUM_EPOCHS = 2
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 # [ ]: train accuracy
 # [ ]: Logging
@@ -24,43 +29,56 @@ NUM_EPOCHS = 2
 
 def hyperparameter_tuning(config):
     # Chec if GPU is available
+    logger.info("---> Starting Hyperparameter Tuning.")
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
+    logger.info(f"Using device: {device}")
 
     # dataloaders
+    logger.info("Calculating data stats.")
     mean, stdev = data_loaders.data_stats(
         data_dir="data/train",
         img_size=(224, 224)
     )
+
+    logger.info("Making the transformers.")
     train_transform, valid_transform = data_loaders.create_transform(
         resize=(244, 244),
         normalize=(mean, stdev),
         random_horizontal_flip=True,
         random_vertical_flip=True,
     )
+
+    logger.info("Creating Train and Valid dataloaders.")
     train_data_loader, valid_data_loader = data_loaders.prepare_data(
         data_dir="data",
         batch_size=config['batch_size'],
         shuffle=True,
         transforms=(train_transform, valid_transform),
     )
+    
     # loss function
+    logger.info("Defining the loss function.")
     loss_fn = torch.nn.CrossEntropyLoss()
 
     # model
+    logger.info("Creating the model.")
     model = models.get_model(
         num_classes=NUM_CLASSES,
-        dropout=config['droptout']
+        dropout=config['dropout']
     ).to(device)
 
     # optimizer
+    logger.info("Defining the optimizer.")
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=config['lr'],        
     )
 
     # training
+    logger.info("Starting Training.")
     for epoch in range(NUM_EPOCHS):
+        logger.info(f"------- starting Epoch {epoch}/{NUM_EPOCHS}")
         for i, (images, labels) in enumerate(train_data_loader):
             images = images.to(device)
             labels = labels.to(device)
@@ -72,8 +90,9 @@ def hyperparameter_tuning(config):
             loss_value.backward()
             optimizer.step()
 
-        print(f"------- Epoch {epoch}/{NUM_EPOCHS}, loss: {loss_value.item():.4f}")
+        logger.info(f"------- Training_loss: {loss_value.item():.4f}")
 
+        logger.info("Starting Testing.")
         y_test = []
         y_pred = []
         model.eval()
@@ -88,7 +107,7 @@ def hyperparameter_tuning(config):
             y_pred.extend(preds.cpu().numpy())
 
         test_accuracy = accuracy_score(y_test, y_pred)
-        print(f"Validation accuracy: {test_accuracy:.4f}")
+        logger.info(f"Validation accuracy: {test_accuracy:.4f}")
         tune.report({
             "training_loss":loss_value,
             "test_accuracy":test_accuracy
@@ -105,9 +124,9 @@ if __name__ == "__main__":
         "batch_size": tune.choice([8, 16]),   # Choice of three batch sizes
         "dropout_rate": tune.uniform(0.1, 0.5)      # Dropout rate between 0.1 and 0.5
     }
-    algo = OptunaSearch()  # ②
+    algo = OptunaSearch()
 
-    tuner = tune.Tuner(  # ③
+    tuner = tune.Tuner(
         hyperparameter_tuning,
         tune_config=tune.TuneConfig(
             metric="mean_accuracy",
