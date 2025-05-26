@@ -9,14 +9,13 @@ import yaml
 from ray import tune
 from ray.tune.search.optuna import OptunaSearch
 
-BATCH_SIZE = 32
 NUM_CLASSES = 7
 NUM_EPOCHS = 2
 
 
 # [ ]: train accuracy
 # [ ]: Logging
-# [ ]: Ray for finetuning
+# [x]: Ray for finetuning
 # [ ]: mlflow for tracking experiments
 # [ ]: Final script for training the model
 # [ ]: Save the accuracies and print them in a plot
@@ -101,14 +100,25 @@ if __name__ == "__main__":
     with open("./config/ray_config.yaml", "r") as f:
         config_data = yaml.safe_load(f)
 
-    tuner = tune.Tuner(
+    config = {
+        "lr": tune.loguniform(1e-5, 1e-2),          # Learning rate between 1e-5 and 1e-2
+        "batch_size": tune.choice([8, 16]),   # Choice of three batch sizes
+        "dropout_rate": tune.uniform(0.1, 0.5)      # Dropout rate between 0.1 and 0.5
+    }
+    algo = OptunaSearch()  # ②
+
+    tuner = tune.Tuner(  # ③
         hyperparameter_tuning,
-        param_space=config_data["hyperparameters"],
         tune_config=tune.TuneConfig(
-            metric="test_accuracy",
+            metric="mean_accuracy",
             mode="max",
-            search_alg=config_data['search_alg'],
-        )
+            search_alg=algo,
+        ),
+        run_config=tune.RunConfig(
+            stop={"training_iteration": 5},
+        ),
+        param_space=config,
     )
     results = tuner.fit()
+    print(results)
     
