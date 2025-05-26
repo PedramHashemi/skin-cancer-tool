@@ -121,4 +121,7 @@ if __name__ == "__main__":
     )
     results = tuner.fit()
     print(results)
+    best_trial = results.get_best_trial("loss", "min", "last")
+    print(f"Best trial config: {best_trial.config}")
+    print(f"Best trial final validation loss: {best_trial.last_result['test_accuracy']}")
     
