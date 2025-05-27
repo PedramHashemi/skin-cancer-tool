@@ -78,7 +78,7 @@ def hyperparameter_tuning(config):
 
     # training
     logger.info("Starting Training.")
-    with mlflow.start_run():
+    with mlflow.start_run() as run:
         mlflow.log_params({
             "epochs": NUM_EPOCHS,
             "device": device,
@@ -103,6 +103,7 @@ def hyperparameter_tuning(config):
 
             logger.info(f"--> Training_loss: {loss_value.item():.4f}")
             mlflow.log_param("training_loss", loss_value.item())
+            mlflow.pytorch.log_model(model, artifact_path="model")
 
             logger.info("Starting Testing.")
             y_test = []
