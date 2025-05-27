@@ -9,6 +9,7 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 import yaml
 from ray import tune
 from ray.tune.search.optuna import OptunaSearch
+import mlflow
 import mlflow.pytorch
 from mlflow import MlflowClient
 
@@ -21,7 +22,7 @@ logger.setLevel(logging.DEBUG)
 # [ ]: train accuracy
 # [x]: Logging models
 # [x]: Ray for finetuning
-# [ ]: mlflow for tracking experiments
+# [x]: mlflow for tracking experiments
 # [ ]: Final script for training the model
 # [ ]: Save the accuracies and print them in a plot
 # [ ]: Add the testing after validation
@@ -77,41 +78,54 @@ def hyperparameter_tuning(config):
 
     # training
     logger.info("Starting Training.")
-    for epoch in range(NUM_EPOCHS):
-        logger.info(f"------- starting Epoch {epoch}/{NUM_EPOCHS}")
-        for i, (images, labels) in enumerate(train_data_loader):
-            images = images.to(device)
-            labels = labels.to(device)
-
-            optimizer.zero_grad()
-            outputs = model(images)
-
-            loss_value = loss_fn(outputs, labels)
-            loss_value.backward()
-            optimizer.step()
-
-        logger.info(f"--> Training_loss: {loss_value.item():.4f}")
-
-        logger.info("Starting Testing.")
-        y_test = []
-        y_pred = []
-        model.eval()
-        # Validation
-        for i, (images, labels) in enumerate(valid_data_loader):
-            images = images.to(device)
-            labels = labels.to(device)
-            with torch.no_grad():
-                preds = torch.argmax(model(images), dim=1)
-            
-            y_test.extend(labels.cpu().numpy())
-            y_pred.extend(preds.cpu().numpy())
-
-        test_accuracy = accuracy_score(y_test, y_pred)
-        logger.info(f"--> Validation accuracy: {test_accuracy:.4f}")
-        tune.report({
-            "training_loss":loss_value,
-            "test_accuracy":test_accuracy
+    with mlflow.start_run():
+        mlflow.log_params({
+            "epochs": NUM_EPOCHS,
+            "device": device,
+            "lr": config['lr'],
+            "batch-size": config['batch-size'],
+            "dropout": config['dropout'],
         })
+        for epoch in range(NUM_EPOCHS):
+            logger.info(f"------- starting Epoch {epoch}/{NUM_EPOCHS}")
+
+            mlflow.log_param("epoch", epoch)
+            for i, (images, labels) in enumerate(train_data_loader):
+                images = images.to(device)
+                labels = labels.to(device)
+
+                optimizer.zero_grad()
+                outputs = model(images)
+
+                loss_value = loss_fn(outputs, labels)
+                loss_value.backward()
+                optimizer.step()
+
+            logger.info(f"--> Training_loss: {loss_value.item():.4f}")
+            mlflow.log_param("training_loss", loss_value.item())
+
+            logger.info("Starting Testing.")
+            y_test = []
+            y_pred = []
+            model.eval()
+            # Validation
+            for i, (images, labels) in enumerate(valid_data_loader):
+                images = images.to(device)
+                labels = labels.to(device)
+                with torch.no_grad():
+                    preds = torch.argmax(model(images), dim=1)
+                
+                y_test.extend(labels.cpu().numpy())
+                y_pred.extend(preds.cpu().numpy())
+
+            test_accuracy = accuracy_score(y_test, y_pred)
+
+            logger.info(f"--> Validation accuracy: {test_accuracy:.4f}")
+            mlflow.log_param("test_accuracy", test_accuracy)
+            tune.report({
+                "training_loss":loss_value.item(),
+                "test_accuracy":test_accuracy
+            })
 
 
 if __name__ == "__main__":
