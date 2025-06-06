@@ -32,7 +32,7 @@ def data_stats(
         img_size (Tuple[int], optional): The images will be resized. Defaults to (224, 224).
     """
 
-    logging.info("---> Starting Image Stats")
+    logger.info("---> Starting Image Stats")
 
     img_height, img_width = img_size
     imgs = []
@@ -124,9 +124,9 @@ def prepare_data(
     """
     logger.info("---> Starting Prepare Data.")
 
-    train_data_path = f"{data_dir}/train"
-    test_data_path = f"{data_dir}/test"
-    valid_data_path = f"{data_dir}/valid"
+    train_data_path = f"/home/bigbang/workshop/projects/skin-cancer-tool/data/train"
+    test_data_path = f"/home/bigbang/workshop/projects/skin-cancer-tool/data/test"
+    valid_data_path = f"/home/bigbang/workshop/projects/skin-cancer-tool/data/valid"
 
     train_transform, valid_transform = transforms
 
