@@ -5,13 +5,12 @@ import torch
 import data_loaders
 import models
 import numpy as np
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import accuracy_score
 import yaml
 from ray import tune
 from ray.tune.search.optuna import OptunaSearch
 import mlflow
 import mlflow.pytorch
-from mlflow import MlflowClient
 
 NUM_CLASSES = 7
 NUM_EPOCHS = 2
@@ -29,19 +28,22 @@ logger.setLevel(logging.DEBUG)
 
 
 def hyperparameter_tuning(config):
-    # Chec if GPU is available
+    import os
+    print("-------------------------> pwd", os.getcwd())
+    # Check if GPU is available
     logger.info("---> Starting Hyperparameter Tuning.")
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info(f"Using device: {device}")
 
     # dataloaders
     logger.info("Calculating data stats.")
-    mean, stdev = data_loaders.data_stats(
-        data_dir="data/train",
-        img_size=(224, 224)
-    )
-
+    # mean, stdev = data_loaders.data_stats(
+    #     data_dir="/home/bigbang/workshop/projects/skin-cancer-tool/data/train",
+    #     img_size=(224, 224)
+    # )
+    mean= [np.float32(0.5706329), np.float32(0.5461266), np.float32(0.76312)]
+    stdev= [np.float32(0.16920634), np.float32(0.151464), np.float32(0.14013906)]
     logger.info("Making the transformers.")
     train_transform, valid_transform = data_loaders.create_transform(
         resize=(244, 244),
@@ -52,7 +54,7 @@ def hyperparameter_tuning(config):
 
     logger.info("Creating Train and Valid dataloaders.")
     train_data_loader, valid_data_loader = data_loaders.prepare_data(
-        data_dir="data",
+        data_dir="/home/bigbang/workshop/projects/skin-cancer-tool",
         batch_size=config['batch_size'],
         shuffle=True,
         transforms=(train_transform, valid_transform),
@@ -83,7 +85,7 @@ def hyperparameter_tuning(config):
             "epochs": NUM_EPOCHS,
             "device": device,
             "lr": config['lr'],
-            "batch-size": config['batch-size'],
+            "batch_size": config['batch_size'],
             "dropout": config['dropout'],
         })
         for epoch in range(NUM_EPOCHS):
@@ -137,14 +139,14 @@ if __name__ == "__main__":
     config = {
         "lr": tune.loguniform(1e-5, 1e-2),          # Learning rate between 1e-5 and 1e-2
         "batch_size": tune.choice([8, 16]),   # Choice of three batch sizes
-        "dropout_rate": tune.uniform(0.1, 0.5)      # Dropout rate between 0.1 and 0.5
+        "dropout": tune.uniform(0.1, 0.5)      # Dropout rate between 0.1 and 0.5
     }
     algo = OptunaSearch()
 
     tuner = tune.Tuner(
         hyperparameter_tuning,
         tune_config=tune.TuneConfig(
-            metric="mean_accuracy",
+            metric="test_accuracy",
             mode="max",
             search_alg=algo,
         ),
@@ -154,8 +156,8 @@ if __name__ == "__main__":
         param_space=config,
     )
     results = tuner.fit()
-    logger.info("Fine Tuning Results: ", results)
-    best_trial = results.get_best_trial("loss", "min", "last")
+    logger.info("Fine Tuning Results: {results}")
+    best_trial = results.get_best_result("test_accuracy", "min", "last")
     logger.info(f"Best trial config: {best_trial.config}")
-    logger.info(f"Best trial final validation loss: {best_trial.last_result['test_accuracy']}")
+    # logger.info(f"Best trial final validation loss: {best_trial.last_result['test_accuracy']}")
     
