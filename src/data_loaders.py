@@ -1,6 +1,5 @@
 """Making the data loaders from the data sets.
 
-We will generate the data loaders for the train, test and validation sets.
 """
 
 import os
@@ -62,8 +61,8 @@ def data_stats(
 
 
 def create_transform(
-    resize: List,
-    normalize: List,
+    resize: List=None,
+    normalize: List=None,
     random_horizontal_flip: bool=True,
     random_vertical_flip: bool=True,
 ) -> transforms:
@@ -88,17 +87,17 @@ def create_transform(
     if random_vertical_flip:
         transform_list.append(transforms.RandomVerticalFlip())
     # Normalize the image
-    transform_list.extend([
-        transforms.ToTensor(),
-        transforms.Normalize(mean=normalize[0], std=normalize[1])
-    ])
+    # transform_list.extend([
+    #     transforms.ToTensor(),
+    #     transforms.Normalize(mean=normalize[0], std=normalize[1])
+    # ])
 
     train_transform = transforms.Compose(transform_list)
     valid_transform = transforms.Compose(
         [
-            transforms.Resize((224, 224)),
+            # transforms.Resize((224, 224)),
             transforms.ToTensor(),
-            transforms.Normalize(mean=normalize[0], std=normalize[1])
+            # transforms.Normalize(mean=normalize[0], std=normalize[1])
         ]
     )
     logger.info("<--- Exiting Create Transformer. Transformers created successfully.")
@@ -124,9 +123,9 @@ def prepare_data(
     """
     logger.info("---> Starting Prepare Data.")
 
-    train_data_path = f"/home/bigbang/workshop/projects/skin-cancer-tool/data/train"
-    test_data_path = f"/home/bigbang/workshop/projects/skin-cancer-tool/data/test"
-    valid_data_path = f"/home/bigbang/workshop/projects/skin-cancer-tool/data/valid"
+    train_data_path = f"/home/bigbang/workshop/projects/skin-cancer-tool/data/train_embbedding"
+    test_data_path = f"/home/bigbang/workshop/projects/skin-cancer-tool/data/test_embedding"
+    valid_data_path = f"/home/bigbang/workshop/projects/skin-cancer-tool/data/valid_embedding"
 
     train_transform, valid_transform = transforms
 

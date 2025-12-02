@@ -2,8 +2,8 @@
 
 import logging
 import torch
-import data_loaders
-import models
+import data_loaders as data_loaders
+import models as TailModel
 import numpy as np
 from sklearn.metrics import accuracy_score
 import yaml
@@ -17,6 +17,10 @@ NUM_EPOCHS = 2
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+remote_server_uri = "http://127.0.0.1:5000"
+mlflow.set_tracking_uri(remote_server_uri)
+mlflow.set_experiment("/my-experiment")
 
 # [ ]: train accuracy
 # [x]: Logging models
@@ -38,16 +42,10 @@ def hyperparameter_tuning(config):
 
     # dataloaders
     logger.info("Calculating data stats.")
-    # mean, stdev = data_loaders.data_stats(
-    #     data_dir="/home/bigbang/workshop/projects/skin-cancer-tool/data/train",
-    #     img_size=(224, 224)
-    # )
-    mean= [np.float32(0.5706329), np.float32(0.5461266), np.float32(0.76312)]
-    stdev= [np.float32(0.16920634), np.float32(0.151464), np.float32(0.14013906)]
     logger.info("Making the transformers.")
     train_transform, valid_transform = data_loaders.create_transform(
-        resize=(244, 244),
-        normalize=(mean, stdev),
+        # resize=(244, 244),
+        # normalize=(mean, stdev),
         random_horizontal_flip=True,
         random_vertical_flip=True,
     )
@@ -66,7 +64,8 @@ def hyperparameter_tuning(config):
 
     # model
     logger.info("Creating the model.")
-    model = models.get_model(
+    model = TailModel(
+        in_features=2048,
         num_classes=NUM_CLASSES,
         dropout=config['dropout']
     ).to(device)

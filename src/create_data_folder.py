@@ -5,6 +5,9 @@ from glob import glob
 import shutil
 import pandas as pd
 from typing import Dict
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 BASE_FOLDER = "data/skin-cancer-mnist-ham10000/versions/2/"
 IMAGE_FOLDERS = [
@@ -78,24 +81,26 @@ def split_data(train_share: float, test_share: float):
             int(len(images) * (train_share + test_share)):]
         
         for img in train_data:
-            destination = f"data/train/{folder}"
-            if not os.path.exists(destination):
-                os.makedirs(destination)
-            shutil.copy(img, destination)
+            train_destination = f"data/train/{folder}"
+            if not os.path.exists(train_destination):
+                os.makedirs(train_destination)
+            shutil.copy(img, train_destination)
 
         for img in test_data:
-            destination = f"data/test/{folder}"
-            if not os.path.exists(destination):
-                os.makedirs(destination)
-            shutil.copy(img, destination)
+            test_destination = f"data/test/{folder}"
+            if not os.path.exists(test_destination):
+                os.makedirs(test_destination)
+            shutil.copy(img, test_destination)
 
         for img in valid_data:
-            destination = f"data/valid/{folder}"
-            if not os.path.exists(destination):
-                os.makedirs(destination)
-            shutil.copy(img, destination)
+            valid_destination = f"data/valid/{folder}"
+            if not os.path.exists(valid_destination):
+                os.makedirs(valid_destination)
+            shutil.copy(img, valid_destination)
 
-    # TODO: Add some statistics about the folders
+    logging.info(f"Train Folder: {len(os.listdir(train_destination))},\
+                 Test Folder: {test_destination}, \
+                    Valid Folder: {valid_destination}")
 
 if __name__ == "__main__":
     create_data_folder(
