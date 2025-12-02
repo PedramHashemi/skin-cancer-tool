@@ -1,33 +1,18 @@
 """Models for image classification."""
 
-import logging
-from torchvision import models
 import torch.nn as nn
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-def get_model(num_classes: int, dropout: float):
-    """Generate the model.
-
-    Args:
-        num_classes (int): number of classes for the classification task.
-    """
-    logger.info("---> Starting model. Restnet50")
-    model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
-
-    logger.info("Freezing the parameters.")
-    for param in model.parameters():
-        param.requires_grad = False
-
-    logger.info("Adding layers to the end of the model.")
-    num_features = model.fc.in_features
-    model.fc = nn.Sequential(
-        nn.Linear(num_features, 64),
-        nn.ReLU(inplace=True),
-        nn.Dropout(dropout),
-        nn.Linear(64, num_classes),
-    )
-
-    logger.info("<--- Exiting the get Model. successfully created the model.")
-    return model
+def TailModel():
+    def __init__(self, in_features: int, num_classes: int, dropout: float):
+        super(TailModel, self).__init__()
+        self.linear1 = nn.Linear(in_features, 64)
+        self.activation = nn.ReLU(inplace=True)
+        self.dropout = nn.Dropout(dropout)
+        self.linear2 = nn.Linear(64, num_classes)
+                           
+    def forward(self, x):
+        x = self.linear1(x)
+        x = self.activation(x)
+        x = self.dropout(x)
+        x = self.linear2(x)
+        return x
