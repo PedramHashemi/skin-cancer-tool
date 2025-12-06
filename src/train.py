@@ -9,6 +9,7 @@ import logging
 from torchvision.models import resnet18
 from torchvision.models.resnet import ResNet18_Weights
 from processor import Processor
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -66,8 +67,7 @@ val_data_loader = DataLoader(
     batch_size=batch_size
 )
 
-# model = TailModel(num_classes=7, dropout=0.5)
-model = resnet18(weights=ResNet18_Weights.DEFAULT)
+model = TailModel(num_classes=7, dropout=0.5)
 
 loss = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(
