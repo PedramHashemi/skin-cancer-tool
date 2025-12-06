@@ -129,11 +129,9 @@ with mlflow.start_run() as run:
             "device": DEVICE
         }
     )
-    # mlflow.log_figure(fig, "loss_plot.png")
-    # mlflow.pytorch.log_model(
-    #     proc_transfer.model,
-    #     artifact_path="model",
-
-    #     model_signature=mlflow.pytorch.infer_signature()
-    #     # input_example=torch.randn(1, 3, 244, 244).numpy()
-    # )
+    mlflow.log_figure(fig, "loss_plot.png")
+    mlflow.pytorch.log_model(
+        proc_transfer.model,
+        artifact_path="model",
+        input_example=torch.randn(1, 3, 244, 244).numpy()
+    )
