@@ -45,8 +45,8 @@ for _ in ["train", "test", "valid"]:
         os.makedirs(f"data/{_}_embedding/{dir}", exist_ok=True)
         for file in tqdm(os.listdir(os.path.join("data", _, dir))):
             if file.endswith(".jpg"):
-                img = Image.open(os.path.join("data", _, dir, file))
-                img_transformed = transforms(img)
+                img = np.array(Image.open(os.path.join("data", _, dir, file)))
+                img_transformed = transforms(img.astype(np.float32) / 255.)
                 img_embedding = resnet(img_transformed.unsqueeze(0).to(device))
                 np.save(
                     os.path.join("data", _+"_embedding", dir, file.split('.')[0] + ".npy"),

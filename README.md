@@ -4,11 +4,10 @@
 Cleaned up the data. the bad csv file s are deleted and two extra folders. 
 
 ## Starting the project
-`python3 -m venv .venv`
-
-`source .venv/bin/activate`
-
-`pip install -r requirements.txt`
+uv init .
+uv add torch
+uv add --optional linting pylint
+uv add --optional formatting black
 
 ## Hyperparameter Tuning
 These are good sources for reading about `Ray`.

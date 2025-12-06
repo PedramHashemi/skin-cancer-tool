@@ -1,4 +1,4 @@
-import data_loaders
+import src.data_loaders as data_loaders
 
 mean, std = data_loaders.data_stats(
     data_dir="data/train",
