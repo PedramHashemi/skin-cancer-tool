@@ -10,7 +10,7 @@ help:
 	@echo "  make clean     - Clean artifacts"
 
 set_env:
-	python -m source .venv/bin/activate
+	source .venv/bin/activate
 
 train:
 	python src/train.py
