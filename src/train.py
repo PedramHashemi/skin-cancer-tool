@@ -23,7 +23,10 @@ with open('config/logging.json', 'r') as f:
 logging.config.dictConfig(log_config)
 logger = logging.getLogger(__name__)
 
-# [ ]: Mlflow for tracking experiments
+with open("config/pipeline.json", "r") as f:
+    pipeline_config = json.load(f)
+
+# [x]: Mlflow for tracking experiments
 EXPERIMENT_NAME = "skin_cancer_classification"
 logger.info(f"Setting up MLflow experiment: {EXPERIMENT_NAME}")
 mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI"))
@@ -33,16 +36,6 @@ logger.info(f"MLflow Experiment ID: {experiment.experiment_id}")
 # mlflow.pytorch.autolog()
 
 
-BATCH_SIZE = 16
-SHUFFLE=True
-LEARNING_RATE = 0.001
-DROPOUT = 0.5
-N_EPOCHS = 2
-DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
-
-MEAN=[0.5706329, 0.5461266, 0.76312]
-STD=[0.16920634, 0.151464, 0.14013906]
-
 
 logger.info("Creating Train Data Loader.")
 train_transform = transforms.Compose([
@@ -50,8 +43,8 @@ train_transform = transforms.Compose([
     transforms.RandomHorizontalFlip(),
     transforms.RandomVerticalFlip(),
     transforms.Normalize(
-        mean=MEAN,
-        std=STD
+        mean=pipeline_config["MEAN"],
+        std=pipeline_config["STD"]
     ),
 
 ])
@@ -61,16 +54,16 @@ train_data = torchvision.datasets.ImageFolder(
 )
 train_data_loader = DataLoader(
     dataset=train_data,
-    batch_size=BATCH_SIZE,
-    shuffle=SHUFFLE
+    batch_size=pipeline_config["BATCH_SIZE"],
+    shuffle=pipeline_config["SHUFFLE"]
 )
 
 logger.info("Creating Valid Data Loader.")
 val_transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(
-        mean=MEAN,
-        std=STD
+        mean=pipeline_config["MEAN"],
+        std=pipeline_config["STD"]
     ),
 ])
 val_data = torchvision.datasets.ImageFolder(
@@ -79,12 +72,12 @@ val_data = torchvision.datasets.ImageFolder(
 )
 val_data_loader = DataLoader(
     dataset=val_data,
-    batch_size=BATCH_SIZE
+    batch_size=pipeline_config["BATCH_SIZE"],
 )
 
 logger.info("Instantiating the model.")
 with mlflow.start_run() as run:
-    model = TailModel(num_classes=7, dropout=DROPOUT)
+    model = TailModel(num_classes=7, dropout=pipeline_config["DROPOUT"])
 
     logger.info("Setting up loss function.")
     loss = torch.nn.CrossEntropyLoss()
@@ -92,7 +85,7 @@ with mlflow.start_run() as run:
     logger.info("Instantiating the optimizer.")
     optimizer = torch.optim.Adam(
         params=model.parameters(),
-        lr=LEARNING_RATE
+        lr=pipeline_config["LEARNING_RATE"]
     )
 
     logger.info("Setting up the training processor.")
@@ -109,29 +102,28 @@ with mlflow.start_run() as run:
     )
 
     logger.info("Forcing the cuda.")
-    proc_transfer.to(DEVICE)
+    proc_transfer.to(pipeline_config["DEVICE"])
 
-    logger.info("Starting up the tesnorboard the training process.")
-    proc_transfer.set_tensorboard('skin_cancer', folder='runs')
-    proc_transfer.train(n_epochs=N_EPOCHS)
-
+    # logger.info("Starting up the tesnorboard the training process.")
+    # proc_transfer.set_tensorboard('skin_cancer', folder='runs')
+    proc_transfer.train(n_epochs=pipeline_config["N_EPOCHS"])
+    model_location = f"models/skin_cancer_model_resnet18_{datetime.datetime.today().strftime('%Y%m%d_%H%M%S')}.pth"
+    proc_transfer.save_checkpoint(model_location)
 
     logger.info("Plotting the losses.")
     fig = proc_transfer.plot_losses()
-    # fig.savefig(f'./images/loss_plot_{datetime.datetime.today()}.png')
+    mlflow.log_artifact(model_location)
     mlflow.log_params(
         {
-            "batch_size": BATCH_SIZE,
             "optimizer": optimizer.__class__.__name__,
             "loss_function": loss.__class__.__name__,
-            "learning_rate": LEARNING_RATE,
-            "dropout": DROPOUT,
-            "device": DEVICE
         }
     )
+    mlflow.log_dict(pipeline_config, "pipeline_config.json")
     mlflow.log_figure(fig, "loss_plot.png")
     mlflow.pytorch.log_model(
         proc_transfer.model,
         artifact_path="model",
         input_example=torch.randn(1, 3, 244, 244).numpy()
     )
+

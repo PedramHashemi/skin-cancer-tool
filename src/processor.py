@@ -288,7 +288,7 @@ class Processor(object):
                 axes = np.atleast_2d(axes).reshape(n_filters, n_channels)
                 # For each channel_out (filter)
                 for i in range(n_filters):    
-                    StepByStep._visualize_tensors(
+                    Processor._visualize_tensors(
                         axes[i, :], 
                         weights[i], 
                         layer_name='Filter #{}'.format(i), 
