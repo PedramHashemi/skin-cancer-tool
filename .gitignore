@@ -172,3 +172,13 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+/mlruns
+/mlartifacts
+/mlruns/*
+/mlartifacts/*
+
+/analysis/
+/data/
+/images/
+/models/

@@ -29,7 +29,7 @@ with open("config/pipeline.json", "r") as f:
 # [x]: Mlflow for tracking experiments
 EXPERIMENT_NAME = "skin_cancer_classification"
 logger.info(f"Setting up MLflow experiment: {EXPERIMENT_NAME}")
-mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI"))
+# mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
 mlflow.set_experiment(EXPERIMENT_NAME)
 experiment = mlflow.get_experiment_by_name(EXPERIMENT_NAME)
 logger.info(f"MLflow Experiment ID: {experiment.experiment_id}")
@@ -112,7 +112,7 @@ with mlflow.start_run() as run:
 
     logger.info("Plotting the losses.")
     fig = proc_transfer.plot_losses()
-    mlflow.log_artifact(model_location)
+    # mlflow.log_artifact(model_location)
     mlflow.log_params(
         {
             "optimizer": optimizer.__class__.__name__,
